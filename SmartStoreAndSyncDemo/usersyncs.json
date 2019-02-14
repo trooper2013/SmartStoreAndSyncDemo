@@ -1,0 +1,11 @@
+{
+  "syncs": [
+    {
+      "syncName": "syncDownUsers",
+      "syncType": "syncDown",
+      "soupName": "Contact",
+      "target": {"type":"soql", "query":"SELECT Name FROM Contact LIMIT 10"},
+      "options": {"mergeMode":"OVERWRITE"}
+    }
+  ]
+}

@@ -25,32 +25,38 @@
 import Foundation
 import UIKit
 import SalesforceSDKCore
+import SmartStore
+import SmartSync
 
 class RootViewController : UITableViewController {
     
     var dataRows = [Dictionary<String, Any>]()
     
+    var store: SmartStore? {
+        get {
+            return SmartStore.shared(withName: SmartStore.defaultStoreName)
+        }
+    }
+    
+    var syncManager: SyncManager? {
+        get {
+            guard let lstore = self.store else {
+                return nil
+            }
+            return SyncManager.sharedInstance(store:lstore)
+        }
+    }
+    
     // MARK: - View lifecycle
     override func loadView() {
         super.loadView()
         self.title = "Mobile SDK Sample App"
-        let request = RestClient.shared.request(forQuery: "SELECT Name FROM Contact LIMIT 5")
-        
-        RestClient.shared.send(request: request, onFailure: { (error, urlResponse) in
-            SalesforceLogger.d(type(of:self), message:"Error invoking: \(request)")
-        }) { [weak self] (response, urlResponse) in
-            
-            guard let strongSelf = self,
-                let jsonResponse = response as? Dictionary<String,Any>,
-                let result = jsonResponse ["records"] as? [Dictionary<String,Any>]  else {
-                    return
-            }
-            
-            SalesforceLogger.d(type(of:strongSelf),message:"Invoked: \(request)")
-            
-            DispatchQueue.main.async {
-                strongSelf.dataRows = result
-                strongSelf.tableView.reloadData()
+        if let syncManager = syncManager {
+            syncManager.reSync(named: "syncDownUsers") { (syncState) in
+                // TBD
+                if (syncState.isDone()) {
+                    self.loadFromStore()
+                }
             }
         }
     }
@@ -81,5 +87,24 @@ class RootViewController : UITableViewController {
         // This adds the arrow to the right hand side.
         cell.accessoryType = UITableViewCellAccessoryType.disclosureIndicator
         return cell
+    }
+    
+    // MARK: - Loading from smartstore
+    func loadFromStore()
+    {
+        let querySpec = QuerySpec.buildSmartQuerySpec(smartSql: "select {Contact:Name} from {Contact}", pageSize: 100)!
+        
+        do {
+            let records = try self.store?.query(using: querySpec, startingFromPageIndex: 0)
+            self.dataRows = (records as! [[NSString]]).map({ row in
+                return ["Name": row[0]]
+            })
+            
+            DispatchQueue.main.async(execute: {
+                self.tableView.reloadData()
+            })
+        } catch let error {
+            SmartSyncLogger.log(type(of:self), level:.debug, message:"Error: \(error)")
+        }
     }
 }

@@ -67,6 +67,8 @@ class AppDelegate : UIResponder, UIApplicationDelegate {
         //loginViewConfig.navigationBarFont = UIFont(name: "Helvetica", size: 16.0)
         //UserAccountManager.shared.loginViewControllerConfig = loginViewConfig
         AuthHelper.loginIfRequired {
+            SmartSyncSDKManager.shared.setupUserStoreFromDefaultConfig()
+            SmartSyncSDKManager.shared.setupUserSyncsFromDefaultConfig()
             self.setupRootViewController()
         }
         

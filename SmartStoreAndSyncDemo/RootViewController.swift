@@ -51,14 +51,15 @@ class RootViewController : UITableViewController {
     override func loadView() {
         super.loadView()
         self.title = "Mobile SDK Sample App"
-        if let syncManager = syncManager {
-            syncManager.reSync(named: "syncDownUsers") { (syncState) in
-                // TBD
-                if (syncState.isDone()) {
-                    self.loadFromStore()
-                }
-            }
-        }
+//        if let syncManager = syncManager {
+//            syncManager.reSync(named: "syncDownUsers") { (syncState) in
+//                // TBD
+//                if (syncState.isDone()) {
+//                    self.loadFromStore()
+//                }
+//            }
+//        }
+        self.loadFromStore()
     }
     
     // MARK: - Table view data source
